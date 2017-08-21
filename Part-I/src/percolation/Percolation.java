@@ -9,6 +9,7 @@ public class Percolation {
 	private final int N;
 	
 	private WeightedQuickUnionUF weightedQuickUnionUF;
+	private WeightedQuickUnionUF quickUFNoBottom;
 	private int numberOfOpenSites;
 	
 	public Percolation(int N) {
@@ -21,6 +22,7 @@ public class Percolation {
 
 		this.numberOfOpenSites = 0;
 		weightedQuickUnionUF = new WeightedQuickUnionUF(N * N + 2);
+		quickUFNoBottom = new WeightedQuickUnionUF(N * N + 1);
 	}
 
 	public boolean isOpen(int i, int j) {
@@ -50,6 +52,7 @@ public class Percolation {
 		// very top
 		if (x == 0) {
 			weightedQuickUnionUF.union(0, p);
+			quickUFNoBottom.union(0, p);
 		}
 
 		// very bottom
@@ -60,22 +63,27 @@ public class Percolation {
 		// left
 		if (j > 1 && isOpen(i, j - 1)) {
 			weightedQuickUnionUF.union(p, p - 1);
+			quickUFNoBottom.union(p, p - 1);
 		}
 
 		// right
 		if (j < N && isOpen(i, j + 1)) {
 			weightedQuickUnionUF.union(p, p + 1);
+			quickUFNoBottom.union(p, p + 1);
 		}
 
 		// top
 		if (i > 1 && isOpen(i - 1, j)) {
 			weightedQuickUnionUF.union(p, p - N);
+			quickUFNoBottom.union(p, p - N);
 		}
 
 		// bottom
 		if (i < N && isOpen(i + 1, j)) {
 			weightedQuickUnionUF.union(p, p + N);
+			quickUFNoBottom.union(p, p + N);
 		}
+		
 	}
 
 	public boolean isFull(int i, int j) {
@@ -89,11 +97,10 @@ public class Percolation {
 		int y = j - 1;
 		int p = x * N + y + 1;
 
-		return weightedQuickUnionUF.connected(0, p);
+		return quickUFNoBottom.connected(0, p);
 	}
 
 	public boolean percolates() {
-		// return isFull(N, N + 1);
 		int p = N * N + 1;
 
 		return weightedQuickUnionUF.connected(0, p);
@@ -109,12 +116,13 @@ public class Percolation {
 
         Percolation perc = new Percolation(n);
 
+        int count = 1;
         while (!in.isEmpty()) {
             int i = in.readInt();
             int j = in.readInt();
             perc.open(i, j);
             
-            System.out.println("Is full: " + perc.isFull(i, j));
+            System.out.println(count++ + "Is full: " + perc.isFull(i, j));
         }
         
 		System.out.println(perc.percolates());
@@ -122,12 +130,12 @@ public class Percolation {
 
 	private void validateArgs(int i, int j) {
 		if (i <= 0 || i > N) {
-			throw new IndexOutOfBoundsException(
+			throw new IllegalArgumentException(
 					"i argument must be between 1 and N");
 		}
 
 		if (j <= 0 || j > N) {
-			throw new IndexOutOfBoundsException(
+			throw new IllegalArgumentException(
 					"i argument must be between 1 and N");
 		}
 	}
