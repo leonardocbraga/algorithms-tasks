@@ -1,6 +1,7 @@
 package collinear_points;
 
 /******************************************************************************
+
  *  Compilation:  javac Point.java
  *  Execution:    java Point
  *  Dependencies: none

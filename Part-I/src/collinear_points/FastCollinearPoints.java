@@ -9,10 +9,10 @@ import edu.princeton.cs.algs4.StdDraw;
 import edu.princeton.cs.algs4.StdOut;
 
 
-public class BruteCollinearPoints {
+public class FastCollinearPoints {
 	private final List<LineSegment> lines;
 	
-	public BruteCollinearPoints(Point[] points){
+	public FastCollinearPoints(Point[] points){
 		if(points == null){
 			throw new NullPointerException("Argument is null");
 		}
@@ -35,27 +35,49 @@ public class BruteCollinearPoints {
 		
 		Arrays.sort(points);
 		
+		Point[] subarray = null;
+
 		for(int i = 0; i < points.length; i++){
-			for(int j = i + 1; j < points.length; j++){				
-				for(int k = j + 1; k < points.length; k++){					
-					for(int l = k + 1; l < points.length; l++){
-						if(collinear(points[i], points[j], points[k], points[l])){
-							lines.add(new LineSegment(points[i], points[l]));
-						}
+			subarray = copyRemaining(points, i);
+			
+			Arrays.sort(subarray, points[i].slopeOrder());
+			
+			int number = 0;
+			int minor = 0;
+			boolean found = false;
+			for(int j = 0; j < subarray.length - 1; j++){
+				if(points[i].slopeTo(subarray[j]) == points[i].slopeTo(subarray[j + 1])){
+					found = true;
+					number++;
+					
+					if(subarray[j].compareTo(points[i]) > 0) minor++;
+				}else if(found){
+					if(number >= 2 && number == minor){
+						lines.add(new LineSegment(points[i], subarray[j]));
 					}
+					
+					found = false;
+					number = 0;
+					minor = 0;
 				}
+				
 			}
 		}
 	}
 	
-	private boolean collinear(Point p, Point q, Point r, Point s){
-		double slopeQ = p.slopeTo(q);
-		double slopeR = p.slopeTo(r);
-		double slopeS = p.slopeTo(s);
+	private Point[] copyRemaining(Point[] array, int index){
+		Point[] subarray = new Point[array.length - 1];
+		int n = 0;
 		
-		return slopeQ == slopeR && slopeQ == slopeS;
+		for(int i = 0; i < array.length; i++){
+			if(i != index){
+				subarray[n++] = array[i];
+			}
+		}
+		
+		return subarray;
 	}
-	   
+
 	public int numberOfSegments(){
 		return lines.size();
 	}
@@ -86,7 +108,7 @@ public class BruteCollinearPoints {
 	    StdDraw.show();
 
 	    // print and draw the line segments
-	    BruteCollinearPoints collinear = new BruteCollinearPoints(points);
+	    FastCollinearPoints collinear = new FastCollinearPoints(points);
 	    for (LineSegment segment : collinear.segments()) {
 	        StdOut.println(segment);
 	        segment.draw();
