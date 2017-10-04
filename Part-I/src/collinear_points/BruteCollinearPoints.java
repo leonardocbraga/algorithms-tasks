@@ -12,15 +12,18 @@ import edu.princeton.cs.algs4.StdOut;
 public class BruteCollinearPoints {
 	private final List<LineSegment> lines;
 	
-	public BruteCollinearPoints(Point[] points){
-		if(points == null){
-			throw new NullPointerException("Argument is null");
+	public BruteCollinearPoints(Point[] pointsParam){
+		if(pointsParam == null){
+			throw new IllegalArgumentException("Argument is null");
 		}
 		
-		for(int i = 0; i < points.length; i++){
-			if(points[i] == null){
-				throw new NullPointerException("An element in array argument is null");
+		Point[] points = new Point[pointsParam.length];
+		for(int i = 0; i < pointsParam.length; i++){
+			if(pointsParam[i] == null){
+				throw new IllegalArgumentException("An element in array argument is null");
 			}
+			
+			points[i] = new Point(pointsParam[i].getX(), pointsParam[i].getY());
 		}
 		
 		for(int i = 0; i < points.length; i++){
