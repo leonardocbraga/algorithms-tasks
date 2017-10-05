@@ -23,7 +23,7 @@ public class BruteCollinearPoints {
 				throw new IllegalArgumentException("An element in array argument is null");
 			}
 			
-			points[i] = new Point(pointsParam[i].getX(), pointsParam[i].getY());
+			points[i] = pointsParam[i];
 		}
 		
 		for(int i = 0; i < points.length; i++){
@@ -94,5 +94,7 @@ public class BruteCollinearPoints {
 	        StdOut.println(segment);
 	        segment.draw();
 	    }
+	    
+	    StdDraw.show();
 	}
 }

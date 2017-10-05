@@ -12,6 +12,57 @@ import edu.princeton.cs.algs4.StdOut;
 public class FastCollinearPoints {
 	private final List<LineSegment> lines;
 	
+	private class Key {
+
+	    private final Point first;
+	    private final Point last;
+
+	    public Key(Point first, Point last) {
+			super();
+			this.first = first;
+			this.last = last;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result + ((first == null) ? 0 : first.hashCode());
+			result = prime * result + ((last == null) ? 0 : last.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Key other = (Key) obj;
+			if (!getOuterType().equals(other.getOuterType()))
+				return false;
+			if (first == null) {
+				if (other.first != null)
+					return false;
+			} else if (!first.equals(other.first))
+				return false;
+			if (last == null) {
+				if (other.last != null)
+					return false;
+			} else if (!last.equals(other.last))
+				return false;
+			return true;
+		}
+
+		private FastCollinearPoints getOuterType() {
+			return FastCollinearPoints.this;
+		}
+
+	}
+	
 	public FastCollinearPoints(Point[] pointsParam){
 		if(pointsParam == null){
 			throw new IllegalArgumentException("Argument is null");
@@ -23,7 +74,7 @@ public class FastCollinearPoints {
 				throw new IllegalArgumentException("An element in array argument is null");
 			}
 			
-			points[i] = new Point(pointsParam[i].getX(), pointsParam[i].getY());
+			points[i] = pointsParam[i];
 		}
 		
 		for(int i = 0; i < points.length; i++){
@@ -39,31 +90,31 @@ public class FastCollinearPoints {
 		Arrays.sort(points);
 		
 		Point[] subarray = null;
-
+		Point current = null;
+		
 		for(int i = 0; i < points.length; i++){
+			current = points[i];
 			subarray = copyRemaining(points, i);
 			
-			Arrays.sort(subarray, points[i].slopeOrder());
+			Arrays.sort(subarray, current.slopeOrder());
 			
-			int number = 0;
-			int minor = 0;
-			boolean found = false;
-			for(int j = 0; j < subarray.length - 1; j++){
-				if(points[i].slopeTo(subarray[j]) == points[i].slopeTo(subarray[j + 1])){
-					found = true;
-					number++;
-					
-					if(subarray[j].compareTo(points[i]) > 0) minor++;
-				}else if(found){
-					if(number >= 2 && number == minor){
-						lines.add(new LineSegment(points[i], subarray[j]));
-					}
-					
-					found = false;
-					number = 0;
-					minor = 0;
+			int j = 0;
+			while(j < subarray.length){
+				
+				int c = 0;
+				while(j < subarray.length - 1 && current.slopeTo(subarray[j]) == current.slopeTo(subarray[j + 1])){
+					j++;
+					c++;
 				}
 				
+				Point nextPoint = subarray[0];
+				Point lastPoint = subarray[j];
+				
+				if(c >= 2 && current.compareTo(nextPoint) < 0){
+					lines.add(new LineSegment(current, lastPoint));
+				}
+				
+				j++;
 			}
 		}
 	}
@@ -112,9 +163,14 @@ public class FastCollinearPoints {
 
 	    // print and draw the line segments
 	    FastCollinearPoints collinear = new FastCollinearPoints(points);
-	    for (LineSegment segment : collinear.segments()) {
+	    LineSegment[] segments = collinear.segments();
+	    System.out.println(segments.length);
+	    
+	    for (LineSegment segment : segments) {
 	        StdOut.println(segment);
 	        segment.draw();
 	    }
+	    
+	    StdDraw.show();
 	}
 }

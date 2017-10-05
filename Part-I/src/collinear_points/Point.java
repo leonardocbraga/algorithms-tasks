@@ -133,6 +133,7 @@ public class Point implements Comparable<Point> {
 				}
 				
 				return 0;
+				//return p1.compareTo(p2);
 			}
         	
         };
@@ -149,14 +150,6 @@ public class Point implements Comparable<Point> {
         /* DO NOT MODIFY */
         return "(" + x + ", " + y + ")";
     }
-    
-    public int getX() {
-		return x;
-	}
-    
-    public int getY() {
-		return y;
-	}
 
     /**
      * Unit tests the Point data type.
