@@ -18,10 +18,10 @@ public class Solver {
 	
     public Solver(Board initial){
     	if(initial == null){
-    		throw new NullPointerException("Argument cannot be null");
+    		throw new IllegalArgumentException("Argument cannot be null");
     	}
     	
-    	moves = 0;
+    	moves = -1;
     	
     	gameRoot = new Node(initial, null);
     	
@@ -32,15 +32,13 @@ public class Solver {
     	
     	if(isSolvable()){
     		solve();
-    	};
+    	}
     }
     
     private void solve(){
     	Node min = queue.delMin();
     	
     	while(min != null && !min.value.isGoal()){
-	    	moves++;
-	    	
 	    	for(Board neighbor : min.value.neighbors()){
 	    		if((min.parent == null || !neighbor.equals(min.parent.value))){
 	    			Node nodeChild = new Node(neighbor, min);
@@ -55,6 +53,7 @@ public class Solver {
 		Node child = min;
 		
 		while(child != null){
+			moves++;
 			child.solution = true;
 			child = child.parent;
 		}
@@ -76,32 +75,22 @@ public class Solver {
     	Node minOrig = queueOrig.delMin();
     	Node minTwin = queueTwin.delMin();
     	
-    	List<Board> listOrig = new ArrayList<Board>();
-    	List<Board> listTwin = new ArrayList<Board>();
-    	
-    	listOrig.add(initial);
-    	listTwin.add(twin);
-    	
     	while((minOrig != null && !minOrig.value.isGoal()) && (minTwin != null && !minTwin.value.isGoal())){
 	    	for(Board neighbor : minOrig.value.neighbors()){
-	    		if((minOrig.parent == null || !neighbor.equals(minOrig.parent.value)) && rootOrig.search(neighbor) == null){
+	    		if((minOrig.parent == null || !neighbor.equals(minOrig.parent.value))){
 	    			Node nodeChild = new Node(neighbor, minOrig);
 	    			minOrig.children.add(nodeChild);
 		    		queueOrig.insert(nodeChild);
-		    		
-		    		listOrig.add(neighbor);
 	    		}
 	    	}
 	    	
 	    	minOrig = queueOrig.delMin();
 	    	
 	    	for(Board neighbor : minTwin.value.neighbors()){
-	    		if((minTwin.parent == null || !neighbor.equals(minTwin.parent.value)) && rootTwin.search(neighbor) == null){
+	    		if((minTwin.parent == null || !neighbor.equals(minTwin.parent.value))){
 	    			Node nodeChild = new Node(neighbor, minTwin);
 	    			minTwin.children.add(nodeChild);
 		    		queueTwin.insert(nodeChild);
-		    		
-		    		listTwin.add(neighbor);
 	    		}
 	    	}
 	    	
@@ -128,14 +117,18 @@ public class Solver {
     }
     
     public Iterable<Board> solution(){
-    	return new Iterable<Board>(){
-
-			@Override
-			public Iterator<Board> iterator() {
-				return new SolverIterator();
-			}
-    		
-    	};
+    	if(isSolvable()){
+	    	return new Iterable<Board>(){
+	
+				@Override
+				public Iterator<Board> iterator() {
+					return new SolverIterator();
+				}
+	    		
+	    	};
+    	}
+    	
+    	return null;
     }
     
     public static void main(String[] args){
@@ -161,7 +154,7 @@ public class Solver {
         }
     }
     
-    class SolverIterator implements Iterator<Board>{
+    private class SolverIterator implements Iterator<Board>{
 		private int currentIndex = 0;
 		private List<Board> boards;
 		
@@ -208,7 +201,7 @@ public class Solver {
 		
 	}
     
-    class Node{
+    private class Node{
     	private Board value;
     	private int level;
     	private Node parent;
@@ -224,33 +217,18 @@ public class Solver {
 				level = this.parent.level + 1;
 			}
 		}
-    	
-    	public Node search(Board value){
-    		if(this.value.equals(value)){
-    			return this;
-    		}
-    		
-    		for(Node child : children){
-    			Node result = child.search(value);
-    			
-    			if(result != null)
-    				return result;
-    		}
-    		
-    		return null;
-    	}
-    	
+
     	@Override
     	public String toString() {
     		return value.toString();
     	}
     }
     
-    class BoardComparator implements Comparator<Node>{
+    private class BoardComparator implements Comparator<Node>{
 		@Override
 		public int compare(Node b1, Node b2) {
-			Integer h1 = b1.value.hamming() + b1.level;
-			Integer h2 = b2.value.hamming() + b2.level;
+			Integer h1 = b1.value.manhattan() + b1.level;
+			Integer h2 = b2.value.manhattan() + b2.level;
 			
 			return h1.compareTo(h2);
 		}

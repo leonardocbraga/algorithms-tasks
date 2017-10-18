@@ -9,15 +9,35 @@ import edu.princeton.cs.algs4.StdRandom;
 public class Board {
 	private int[][] blocks;
 	
+	private int hamming;
+	private int manhattan;
 	private int n;
 	
-	public Board(int[][] blocks) {
-		this.n = blocks.length;
+	public Board(int[][] blocksParam) {
+		this.n = blocksParam.length;
 		
 		this.blocks = new int[n][n];
-		for (int i = 0; i < blocks.length; i++) {
-			for (int j = 0; j < blocks.length; j++) {
-				this.blocks[i][j] = blocks[i][j];
+		for (int i = 0; i < blocksParam.length; i++) {
+			for (int j = 0; j < blocksParam.length; j++) {
+				this.blocks[i][j] = blocksParam[i][j];
+			}
+		}
+		
+		hamming = 0;
+		manhattan = 0;
+		
+		for (int i = 0; i < this.blocks.length; i++) {
+			for (int j = 0; j < this.blocks.length; j++) {
+				if(this.blocks[i][j] != 0 && this.blocks[i][j] != ((i * n) + j + 1)){
+					hamming++;
+				}
+				
+				if(this.blocks[i][j] != 0){
+					int linha = (int)Math.ceil((double)this.blocks[i][j] / n);
+					int coluna = (this.blocks[i][j] % n == 0 ? n : (this.blocks[i][j] % n)) ;
+					
+					manhattan += Math.abs(linha - i - 1) + Math.abs(coluna - j - 1);
+				}
 			}
 		}
 	}
@@ -27,32 +47,10 @@ public class Board {
 	}
 
 	public int hamming() {
-		int hamming = 0;
-		for (int i = 0; i < blocks.length; i++) {
-			for (int j = 0; j < blocks.length; j++) {
-				if(this.blocks[i][j] != 0 && this.blocks[i][j] != ((i * n) + j + 1)){
-					hamming++;
-				}
-			}
-		}
-		
 		return hamming;
 	}
 
 	public int manhattan() {
-		int manhattan = 0;
-		
-		for (int i = 0; i < blocks.length; i++) {
-			for (int j = 0; j < blocks.length; j++) {
-				if(this.blocks[i][j] != 0){
-					int linha = (int)Math.ceil((double)this.blocks[i][j] / n);
-					int coluna = (this.blocks[i][j] % n == 0 ? n : (this.blocks[i][j] % n)) ;
-					
-					manhattan += Math.abs(linha - i - 1) + Math.abs(coluna - j - 1);
-				}
-			}
-		}
-		
 		return manhattan;
 	}
 
@@ -60,7 +58,7 @@ public class Board {
 		return hamming() == 0;
 	}
 
-	public Board twin2() {
+	private Board twinRandom() {
 		Board blocksTwin = new Board(blocks);
 		
 		boolean found = false;
@@ -82,7 +80,6 @@ public class Board {
 	}
 	
 	public Board twin() {
-		Board blocksTwin = new Board(blocks);
 		int position1 = 0;
 		int position2 = 0;
 		
@@ -95,6 +92,7 @@ public class Board {
 							position2 = i2 * n + j2;
 							
 							if((position1 < position2 && blocks[i1][j1] > blocks[i2][j2]) || (position1 > position2 && blocks[i1][j1] < blocks[i2][j2])){
+								Board blocksTwin = new Board(blocks);
 								exchange(blocksTwin, i1, j1, i2, j2);
 								return blocksTwin;
 							}
@@ -105,7 +103,7 @@ public class Board {
 			}
 		}
 		
-		return blocksTwin;
+		return twinRandom();
 	}
 	
 	private void exchange(Board board, int i1, int j1, int i2, int j2){
@@ -166,7 +164,7 @@ public class Board {
 		return result.toString();
 	}
 	
-	class BoardIterator implements Iterator<Board>{
+	private class BoardIterator implements Iterator<Board>{
 		private int currentIndex = 0;
 		private List<Board> boards;
 		
