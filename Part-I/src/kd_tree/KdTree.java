@@ -1,7 +1,6 @@
 package kd_tree;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import edu.princeton.cs.algs4.Point2D;
@@ -10,10 +9,6 @@ import edu.princeton.cs.algs4.StdDraw;
 
 public class KdTree {
     private Node root;
-
-    public KdTree() {
-
-    }
 
     public boolean isEmpty() {
         return root == null;
@@ -29,7 +24,7 @@ public class KdTree {
 
     public void insert(Point2D p) {
         if (p == null) {
-            throw new NullPointerException("Argument cannot be null");
+            throw new IllegalArgumentException("Argument cannot be null");
         }
 
         if (root == null) {
@@ -41,7 +36,7 @@ public class KdTree {
 
     public boolean contains(Point2D p) {
         if (p == null) {
-            throw new NullPointerException("Argument cannot be null");
+            throw new IllegalArgumentException("Argument cannot be null");
         }
 
         if (root == null) {
@@ -79,100 +74,37 @@ public class KdTree {
 
     public Iterable<Point2D> range(RectHV rect) {
         if (rect == null) {
-            throw new NullPointerException("Argument cannot be null");
+            throw new IllegalArgumentException("Argument cannot be null");
         }
 
         List<Point2D> matches = new ArrayList<Point2D>();
-        rangeSearch(root, rect, matches);
 
-        return new PointIterable(matches);
-    }
-
-    private void rangeSearch(Node node, RectHV rect, List<Point2D> matches) {
-        if (node == null) {
-            return;
+        if (!isEmpty()) {
+            root.rangeSearch(rect, matches);
         }
 
-        if (!rect.intersects(node.rect)) {
-            return;
-        }
-
-        if (rect.contains(node.key)) {
-            matches.add(node.key);
-        }
-
-        rangeSearch(node.left, rect, matches);
-        rangeSearch(node.right, rect, matches);
+        return matches;
     }
 
     public Point2D nearest(Point2D p) {
         if (p == null) {
-            throw new NullPointerException("Argument cannot be null");
+            throw new IllegalArgumentException("Argument cannot be null");
         }
 
         if (isEmpty()) {
             return null;
         }
 
-        return nearestSearch(root, null, p).key;
-    }
-
-    private Node nearestSearch(Node node, Node nearestParam, Point2D point) {
-        Node nearest = null;
-        if (nearestParam == null) {
-            nearest = node;
-        } else {
-            double nearestDist = nearestParam.key.distanceTo(point);
-            double rectDist = node.rect.distanceTo(point);
-
-            if (nearestDist < rectDist) {
-                return nearestParam;
-            }
-
-            double nodeDist = node.key.distanceTo(point);
-            if (nodeDist < nearestDist) {
-                nearest = node;
-            } else {
-                nearest = nearestParam;
-            }
-
-        }
-
-        if (node.left == null && node.right == null) {
-            return nearest;
-        } else if (node.left == null) {
-            return nearestSearch(node.right, nearest, point);
-        } else if (node.right == null) {
-            return nearestSearch(node.left, nearest, point);
-        } else {
-            if (node.vertical) {
-                if (point.x() > node.key.x()) {
-                    nearest = nearestSearch(node.right, nearest, point);
-                    nearest = nearestSearch(node.left, nearest, point);
-                } else {
-                    nearest = nearestSearch(node.left, nearest, point);
-                    nearest = nearestSearch(node.right, nearest, point);
-                }
-            } else {
-                if (point.y() > node.key.y()) {
-                    nearest = nearestSearch(node.right, nearest, point);
-                    nearest = nearestSearch(node.left, nearest, point);
-                } else {
-                    nearest = nearestSearch(node.left, nearest, point);
-                    nearest = nearestSearch(node.right, nearest, point);
-                }
-            }
-
-            return nearest;
-        }
+        return root.nearestSearch(null, p, false).key;
     }
 
     private class Node {
-        private Point2D key;
+        private final Point2D key;
+        private final boolean vertical;
+        private final RectHV rect;
+
         private Node left;
         private Node right;
-        private boolean vertical;
-        private RectHV rect;
         private int size;
 
         Node(Point2D point, boolean vertical, RectHV rect) {
@@ -182,16 +114,37 @@ public class KdTree {
             this.size = 1;
         }
 
-        void insert(Point2D point) {
+        boolean insert(Point2D point) {
             if (point.equals(key)) {
-                return;
+                return false;
             }
 
-            this.size++;
+            boolean inserted = true;
 
+            if (isLeanLeft(point)) {
+                if (left == null) {
+                    left = new Node(point, !vertical, getLeftRect());
+                } else {
+                    inserted = left.insert(point);
+                }
+            } else {
+                if (right == null) {
+                    right = new Node(point, !vertical, getRightRect());
+                } else {
+                    inserted = right.insert(point);
+                }
+            }
+
+            if (inserted) {
+                this.size++;
+            }
+
+            return inserted;
+        }
+
+        private boolean isLeanLeft(Point2D point) {
             double keyValue = 0d;
             double pointValue = 0d;
-            RectHV rectChild = null;
 
             if (vertical) {
                 pointValue = point.x();
@@ -201,34 +154,26 @@ public class KdTree {
                 keyValue = key.y();
             }
 
-            if (pointValue < keyValue) {
-                if (left == null) {
-                    if (vertical) {
-                        rectChild = new RectHV(rect.xmin(), rect.ymin(),
-                                key.x(), rect.ymax());
-                    } else {
-                        rectChild = new RectHV(rect.xmin(), rect.ymin(),
-                                rect.xmax(), key.y());
-                    }
+            return pointValue < keyValue;
+        }
 
-                    left = new Node(point, !vertical, rectChild);
-                } else {
-                    left.insert(point);
-                }
+        private RectHV getLeftRect() {
+            if (vertical) {
+                return new RectHV(rect.xmin(), rect.ymin(), key.x(),
+                        rect.ymax());
             } else {
-                if (right == null) {
-                    if (vertical) {
-                        rectChild = new RectHV(key.x(), rect.ymin(),
-                                rect.xmax(), rect.ymax());
-                    } else {
-                        rectChild = new RectHV(rect.xmin(), key.y(),
-                                rect.xmax(), rect.ymax());
-                    }
+                return new RectHV(rect.xmin(), rect.ymin(), rect.xmax(),
+                        key.y());
+            }
+        }
 
-                    right = new Node(point, !vertical, rectChild);
-                } else {
-                    right.insert(point);
-                }
+        private RectHV getRightRect() {
+            if (vertical) {
+                return new RectHV(key.x(), rect.ymin(), rect.xmax(),
+                        rect.ymax());
+            } else {
+                return new RectHV(rect.xmin(), key.y(), rect.xmax(),
+                        rect.ymax());
             }
         }
 
@@ -237,80 +182,79 @@ public class KdTree {
                 return true;
             }
 
-            boolean rightContains = false;
-            boolean leftContains = false;
+            if (isLeanLeft(point)) {
+                boolean leftContains = left != null && left.contains(point);
 
-            if (vertical) {
-                if (point.x() > key.x()) {
-                    if (right != null) {
-                        rightContains = right.contains(point);
-                    }
-
-                    if (rightContains) {
-                        return true;
-                    } else if (left != null) {
-                        return left.contains(point);
-                    } else {
-                        return false;
-                    }
-                } else {
-                    if (left != null) {
-                        leftContains = left.contains(point);
-                    }
-
-                    if (leftContains) {
-                        return true;
-                    } else if (right != null) {
-                        return right.contains(point);
-                    } else {
-                        return false;
-                    }
-                }
+                return leftContains;
             } else {
-                if (point.y() > key.y()) {
-                    if (right != null) {
-                        rightContains = right.contains(point);
-                    }
+                boolean rightContains = right != null && right.contains(point);
 
-                    if (rightContains) {
-                        return true;
-                    } else if (left != null) {
-                        return left.contains(point);
-                    } else {
-                        return false;
-                    }
-                } else {
-                    if (left != null) {
-                        leftContains = left.contains(point);
-                    }
+                return rightContains;
+            }
+        }
 
-                    if (leftContains) {
-                        return true;
-                    } else if (right != null) {
-                        return right.contains(point);
-                    } else {
-                        return false;
+        Node nearestSearch(Node nearestParam, Point2D point, boolean prune) {
+            Node nearest = null;
+            if (nearestParam == null) {
+                nearest = this;
+            } else {
+
+                double nearestDist = nearestParam.key.distanceSquaredTo(point);
+                if (prune) {
+                    double rectDist = this.rect.distanceSquaredTo(point);
+
+                    if (nearestDist <= rectDist) {
+                        return nearestParam;
                     }
                 }
+
+                double nodeDist = this.key.distanceSquaredTo(point);
+                if (nodeDist < nearestDist) {
+                    nearest = this;
+                } else {
+                    nearest = nearestParam;
+                }
+            }
+
+            if (left == null && right == null) {
+                return nearest;
+            } else if (left == null) {
+                return right.nearestSearch(nearest, point, false);
+            } else if (right == null) {
+                return left.nearestSearch(nearest, point, false);
+            } else {
+                if (isLeanLeft(point)) {
+                    nearest = left.nearestSearch(nearest, point, false);
+                    nearest = right.nearestSearch(nearest, point, true);
+                } else {
+                    nearest = right.nearestSearch(nearest, point, false);
+                    nearest = left.nearestSearch(nearest, point, true);
+                }
+
+                return nearest;
+            }
+        }
+
+        void rangeSearch(RectHV rectParam, List<Point2D> matches) {
+            if (!rectParam.intersects(this.rect)) {
+                return;
+            }
+
+            if (rectParam.contains(this.key)) {
+                matches.add(this.key);
+            }
+
+            if (left != null) {
+                left.rangeSearch(rectParam, matches);
+            }
+
+            if (right != null) {
+                right.rangeSearch(rectParam, matches);
             }
         }
 
         int size() {
             return size;
-        }
-
-    }
-
-    private class PointIterable implements Iterable<Point2D> {
-        private List<Point2D> points;
-
-        PointIterable(List<Point2D> points) {
-            this.points = points;
-        }
-
-        @Override
-        public Iterator<Point2D> iterator() {
-            return this.points.iterator();
         }
 
     }
@@ -323,14 +267,15 @@ public class KdTree {
         tree.insert(new Point2D(0.4, 0.7));
         tree.insert(new Point2D(0.9, 0.6));
 
-        for (Point2D range : tree.range(new RectHV(0, 0, .6, .8))) {
-            // System.out.println(range);
-        }
+        System.out.println(tree.nearest(new Point2D(0.89, 0.2)));
+        // for (Point2D range : tree.range(new RectHV(0, 0, .6, .8))) {
+        // System.out.println(range);
+        // }
 
         // System.out.println(tree.contains(new Point2D(0.9, 0.6)));
         // tree.draw();
 
-        System.out.println((new RectHV(0.436, 0.582, 0.006, 0.871))
-                .contains(new Point2D(0.522, 0.852)));
+        // System.out.println((new RectHV(0.436, 0.582, 0.006, 0.871))
+        // .contains(new Point2D(0.522, 0.852)));
     }
 }
