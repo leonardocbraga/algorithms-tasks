@@ -219,9 +219,9 @@ public class KdTree {
             if (left == null && right == null) {
                 return nearest;
             } else if (left == null) {
-                return right.nearestSearch(nearest, point, false);
+                return right.nearestSearch(nearest, point, true);
             } else if (right == null) {
-                return left.nearestSearch(nearest, point, false);
+                return left.nearestSearch(nearest, point, true);
             } else {
                 if (isLeanLeft(point)) {
                     nearest = left.nearestSearch(nearest, point, false);
@@ -261,13 +261,17 @@ public class KdTree {
 
     public static void main(String[] args) {
         KdTree tree = new KdTree();
-        tree.insert(new Point2D(0.7, 0.2));
-        tree.insert(new Point2D(0.5, 0.4));
-        tree.insert(new Point2D(0.2, 0.3));
-        tree.insert(new Point2D(0.4, 0.7));
-        tree.insert(new Point2D(0.9, 0.6));
+        tree.insert(new Point2D(0.372, 0.497));
+        tree.insert(new Point2D(0.564, 0.413));
+        tree.insert(new Point2D(0.226, 0.577));
+        tree.insert(new Point2D(0.144, 0.179));
+        tree.insert(new Point2D(0.083, 0.51));
+        tree.insert(new Point2D(0.32, 0.708));
+        tree.insert(new Point2D(0.862, 0.825));
+        tree.insert(new Point2D(0.785, 0.725));
+        tree.insert(new Point2D(0.499, 0.208));
 
-        System.out.println(tree.nearest(new Point2D(0.89, 0.2)));
+        System.out.println(tree.nearest(new Point2D(0.4, 0.63)));
         // for (Point2D range : tree.range(new RectHV(0, 0, .6, .8))) {
         // System.out.println(range);
         // }
